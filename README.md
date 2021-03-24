@@ -1,1 +1,3 @@
-# Демонстрация проекта создания приложения на Django
+# Start in Django
+
+* [Step 01](https://youtu.be/szWsVEuUNMQ)
