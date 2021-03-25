@@ -1,10 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+
+    <!-- CSS Reset -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
+
+    <link href="/static/milligram.min.css" rel="stylesheet">
+
+    <style>
+        .container {
+            margin: 0 auto;
+            max-width: 80rem;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Hello World!</h1>
+    <div class="container">
+        <h1>Simple todo list</h1>
+        <div class="row">
+            <form action="/create" class="column" method="post">
+                <label>Title <input name="title" id="title" type="text" placeholder="Title"></label>
+                <label>Description
+                    <textarea name="description" id="description" cols="30" rows="10"
+                        placeholder="Description"></textarea>
+                </label>
+                <label>Priority
+                    <select name="priority" id="priority">
+                        <option value="L">Low</option>
+                        <option value="M">Medium</option>
+                        <option value="H">High</option>
+                    </select>
+                </label>
+                <button class="float-right">Save</button>
+            </form>
+        </div>
+        <div class="row">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Title</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Изучить Django</td>
+                        <td></td>
+                        <td><a href="/delete/1">Delete</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </body>
+
 </html>
