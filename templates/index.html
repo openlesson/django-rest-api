@@ -21,46 +21,147 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1>Simple todo list</h1>
-        <div class="row">
-            <form action="/create" class="column" method="post">
-                <label>Title <input name="title" id="title" type="text" placeholder="Title"></label>
-                <label>Description
-                    <textarea name="description" id="description" cols="30" rows="10"
-                        placeholder="Description"></textarea>
-                </label>
-                <label>Priority
-                    <select name="priority" id="priority">
-                        <option value="L">Low</option>
-                        <option value="M">Medium</option>
-                        <option value="H">High</option>
-                    </select>
-                </label>
-                <button class="float-right">Save</button>
-            </form>
-        </div>
-        <div class="row">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Title</th>
-                        <th>Created</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Изучить Django</td>
-                        <td></td>
-                        <td><a href="/delete/1">Delete</a></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+<div class="container">
+    <h1>Simple todo list</h1>
+    <div class="row">
+        <form class="column">
+            <label>Title
+                <input name="title" id="title" type="text" placeholder="Title"></label>
+            <label>Description
+                <textarea name="description" id="description" cols="30" rows="10"
+                          placeholder="Description"></textarea>
+            </label>
+            <label>Priority
+                <select name="priority" id="priority">
+                    <option value="L">Low</option>
+                    <option value="M">Medium</option>
+                    <option value="H">High</option>
+                </select>
+            </label>
+            <button id="save" class="float-right">Save</button>
+        </form>
     </div>
+    <div class="row">
+        <table>
+            <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Created</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody id="tasks"></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    const baseUrl = 'http://127.0.0.1:8000/api/v1';
+
+    const tbody = document.getElementById('tasks');
+
+    // создание строки таблицы
+    function createRow(t) {
+        const tr = document.createElement('tr');
+        const tdId = document.createElement('td');
+        tdId.append(document.createTextNode(t.id));
+        const tdTitle = document.createElement('td');
+        tdTitle.append(document.createTextNode(t.title));
+        const tdCreated = document.createElement('td');
+        tdCreated.append(document.createTextNode(t.created));
+        const tdAction = document.createElement('td');
+        tdAction.innerHTML = `<a href="${baseUrl}/tasks/${t.id}">Delete</a>`;
+        tr.append(tdId, tdTitle, tdCreated, tdAction);
+        return tr;
+    }
+
+    // заполнение таблицы данными
+    function fillTable(tasks) {
+        tbody.innerHTML = '';
+        tasks.results.forEach(t => {
+            tbody.append(createRow(t));
+        });
+    }
+
+    // выгрузка данных методом GET посредством AJAX
+    fetch(`${baseUrl}/tasks/`, {
+        method: 'GET'
+    })
+        .then(response => response.json())
+        .then(fillTable);
+
+    function getCookie(name) {
+        const matches = document.cookie.match(new RegExp(
+            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+        ))
+        return matches ? decodeURIComponent(matches[1]) : undefined
+    }
+
+    // сохранение данных методом POST
+    const btnSave = document.getElementById('save');
+    const inputTitle = document.getElementById('title');
+    const inputDescription = document.getElementById('description');
+    const selectPriority = document.getElementById('priority');
+
+    function clearInput() {
+        inputTitle.value = inputDescription.value = '';
+        selectPriority.value = 'L';
+    }
+
+    btnSave.addEventListener('click', (e) => {
+        e.preventDefault(); // не отправлять данные формы
+        const task = {
+            title: inputTitle.value,
+            description: inputDescription.value,
+            priority: selectPriority.value,
+            tags: [1]
+        };
+
+        function appendTask(task) {
+            console.log(task);
+            tbody.append(createRow(task));
+            clearInput();
+        }
+
+        fetch(`${baseUrl}/tasks/`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(task)
+        })
+            .then(response => response.json())
+            .then(appendTask)
+            .catch(console.error);
+    });
+
+    tbody.addEventListener('click', e => {
+        e.preventDefault();
+        console.log(e.target);
+        if (e.target.nodeName !== 'A') {
+            return;
+        }
+
+        // удаляем строчку
+        function deleteRow(response) {
+            console.log(response);
+            if(response.ok) {
+                e.target.parentNode.parentNode.remove();
+            }
+        }
+
+        // если гипперссылка - удаляем
+        fetch(`${e.target.href}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        }).then(deleteRow)
+            .catch(console.log);
+    });
+
+</script>
 </body>
 
 </html>
