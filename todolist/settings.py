@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'webapp', # устанавливаем наше приложение
-    'api'
+    'api',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
