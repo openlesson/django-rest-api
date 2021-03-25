@@ -1,0 +1,35 @@
+GET http://localhost:8000/api/v1/tasks
+
+###
+GET http://localhost:8000/api/v1/tasks/5
+
+###
+POST http://localhost:8000/api/v1/tasks/
+Content-Type: application/json
+
+
+{
+  "title": "Test",
+  "description": "TEST",
+  "priority": "H",
+  "tags": [1]
+}
+
+
+###
+PUT http://localhost:8000/api/v1/tasks/6/
+Content-Type: application/json
+
+{
+  "id": 6,
+  "title": "Изучить AJAX",
+  "description": "Очень нужная вещь",
+  "priority": "M",
+  "tags": [
+    1, 2
+  ]
+}
+
+###
+DELETE http://localhost:8000/api/v1/tasks/7/
+
