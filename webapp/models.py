@@ -2,6 +2,13 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class Tag(models.Model):
+    name = models.CharField(unique=True, max_length=100, blank=False, null=False)
+
+    def __str__(self):
+        return self.name
+
+
 class Task(models.Model):
     title = models.CharField(max_length=100, blank=False, null=False)
     description = models.TextField()
@@ -10,3 +17,7 @@ class Task(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, default=None, null=True, on_delete=models.CASCADE)
+    tags = models.ManyToManyField(Tag)
+
+    def __str__(self):
+        return self.title
