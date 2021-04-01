@@ -1,0 +1,51 @@
+GET http://localhost:8000/api/v1/tasks
+
+###
+GET http://localhost:8000/api/v1/tasks/5
+
+### получение токена JWT
+POST http://localhost:8000/api/token/
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin"
+}
+
+###
+POST http://localhost:8000/api/token/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYxNzM3MTA3NiwianRpIjoiMjkxYWNmM2E1MDQ3NDg3MDk3ZTFkOWQ2Yzk0NTA1M2EiLCJ1c2VyX2lkIjoxfQ.ExE84-9Vktsf2Xc5vynUp7PzgXNVgE7B8y1u5g06XQY"
+}
+###
+POST http://localhost:8000/api/v1/tasks/
+Content-Type: application/json
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjE3Mjg1Nzg3LCJqdGkiOiJhMDY1OTZmZmJlMjI0NzkyYjE3NzU5YTZiMDQzZTYwMyIsInVzZXJfaWQiOjF9.qomotX7OgfdAJaMKXyDgIRoddmHrCniASW-fapzhnbc
+
+{
+  "title": "Test",
+  "description": "TEST",
+  "priority": "H",
+  "tags": [1]
+}
+
+
+###
+PUT http://localhost:8000/api/v1/tasks/6/
+Content-Type: application/json
+
+{
+  "id": 6,
+  "title": "Изучить AJAX",
+  "description": "Очень нужная вещь",
+  "priority": "M",
+  "tags": [
+    1, 2
+  ]
+}
+
+###
+DELETE http://localhost:8000/api/v1/tasks/7/
+
