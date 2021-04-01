@@ -10,6 +10,10 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializers
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
+    def perform_create(self, serializer):
+        print(self.request.user)
+        serializer.save(user=self.request.user)
+
 
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
