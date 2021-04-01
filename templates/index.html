@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+
     <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
 
@@ -13,6 +14,10 @@
     <link href="/static/milligram.min.css" rel="stylesheet">
 
     <style>
+        .hidden {
+            display: none !important;
+        }
+
         .container {
             margin: 0 auto;
             max-width: 80rem;
@@ -23,12 +28,17 @@
 <body>
 <div class="container">
     <h1>Simple todo list</h1>
+    <header class="row">
+        <div class="column">
+            <a href="#" id="singIn" class="float-right">Sing In</a>
+        </div>
+    </header>
     <div class="row">
-        <form class="column">
-            <label>Title
-                <input name="title" id="title" type="text" placeholder="Title"></label>
-            <label>Description
-                <textarea name="description" id="description" cols="30" rows="10"
+        <form class="column" id="create-task-form">
+            <label>Title *
+                <input name="title" id="title" type="text" placeholder="Title" required></label>
+            <label>Description *
+                <textarea name="description" id="description" cols="30" rows="10" required
                           placeholder="Description"></textarea>
             </label>
             <label>Priority
@@ -56,9 +66,16 @@
     </div>
 </div>
 <script>
+    let auth = false;
+
     const baseUrl = 'http://127.0.0.1:8000/api/v1';
 
     const tbody = document.getElementById('tasks');
+
+    const singIn = document.getElementById("singIn");
+
+    const createTaskForm = document.getElementById('create-task-form');
+    createTaskForm.classList.add('hidden');
 
     // создание строки таблицы
     function createRow(t) {
@@ -70,7 +87,11 @@
         const tdCreated = document.createElement('td');
         tdCreated.append(document.createTextNode(t.created));
         const tdAction = document.createElement('td');
-        tdAction.innerHTML = `<a href="${baseUrl}/tasks/${t.id}">Delete</a>`;
+        if (auth) {
+            tdAction.innerHTML = `<a href="${baseUrl}/tasks/${t.id}">Delete</a>`;
+        } else {
+            tdAction.innerHTML = `<a href="${baseUrl}/tasks/${t.id}" class="hidden">Delete</a>`;
+        }
         tr.append(tdId, tdTitle, tdCreated, tdAction);
         return tr;
     }
@@ -108,8 +129,19 @@
         selectPriority.value = 'L';
     }
 
+    function showError(message) {
+        Swal.fire({
+            title: message,
+            text: 'It is not possible',
+            icon: 'error',
+            confirmButtonText: 'Cancel',
+            buttonsStyling: false
+        })
+    }
+
     btnSave.addEventListener('click', (e) => {
         e.preventDefault(); // не отправлять данные формы
+
         const task = {
             title: inputTitle.value,
             description: inputDescription.value,
@@ -117,23 +149,39 @@
             tags: [1]
         };
 
+        if (!task.description || !task.title) {
+            showError('Fill required fields');
+            inputTitle.focus();
+            return;
+        }
+
         function appendTask(task) {
             console.log(task);
-            tbody.append(createRow(task));
-            clearInput();
+            if (task && !task.error) {
+                tbody.append(createRow(task));
+                clearInput();
+            } else {
+                showError(task.error)
+            }
         }
 
         fetch(`${baseUrl}/tasks/`, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Authorization': `Bearer ${localStorage['access']}`
             },
             body: JSON.stringify(task)
         })
-            .then(response => response.json())
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                return {"error": response.statusText};
+            })
             .then(appendTask)
-            .catch(console.error);
+            .catch(showError);
     });
 
     tbody.addEventListener('click', e => {
@@ -146,7 +194,7 @@
         // удаляем строчку
         function deleteRow(response) {
             console.log(response);
-            if(response.ok) {
+            if (response.ok) {
                 e.target.parentNode.parentNode.remove();
             }
         }
@@ -155,13 +203,77 @@
         fetch(`${e.target.href}/`, {
             method: 'DELETE',
             headers: {
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Authorization': `Bearer ${localStorage['access']}`
             }
         }).then(deleteRow)
-            .catch(console.log);
+            .catch(showError);
     });
 
+    function updateUI() {
+        createTaskForm.classList.remove('hidden');
+        singIn.classList.add('hidden');
+        tbody.childNodes.forEach(tr => {
+            if (tr.nodeName !== 'TR') return;
+            tr.lastChild.firstChild.classList.remove('hidden');
+        })
+    }
+
+    function login(username, password) {
+        fetch(`${baseUrl.replace('/v1', '')}/token/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        }).then(response => {
+            if (response.ok) {
+                response
+                    .json()
+                    .then(jwt => {
+                        console.log('jwt: ', jwt);
+                        localStorage['access'] = jwt['access'];
+                        localStorage['refresh'] = jwt['refresh'];
+                        auth = true;
+                        updateUI();
+                    });
+            } else {
+                showError("Invalid Login or Password ")
+            }
+        }).catch(showError)
+    }
+
+    singIn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('sing in');
+        Swal.fire({
+            title: 'Sing In',
+            html: `<input name="login" id="login" placeholder="Login"/>
+                   <br/>
+                   <input name="password" id="password" type="password" placeholder="Password"/><br/>`,
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const username = document.getElementById("login").value;
+                const pass = document.getElementById('password').value;
+                login(username, pass);
+                Swal.fire({
+                    title: 'Welcome',
+                    text: 'Your could now add new task',
+                    buttonsStyling: false
+                })
+            }
+        })
+    });
 </script>
+
+
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
 </body>
 
 </html>
